@@ -1,20 +1,43 @@
 <script>
+	import { authHandler } from '../store/store';
+
+	const loading = '/loader.gif';
+
 	let email = '';
 	let password = '';
 	let confirmPassword = '';
 	let error = false;
 	let register = false;
+	let authenticating = false;
 
-	function handleAuth() {
-		if (!email || !password || register || !confirmPassword) {
+	async function handleAuth() {
+		if (authenticating) {
+			return;
+		}
+
+		if (!email || !password || (register && (confirmPassword !== password))) {
 			error = true;
 			return;
+		}
+
+		authenticating = true;
+
+		try {
+			if (!register) {
+				await authHandler.login(email, password);
+			} else {
+				await authHandler.signup(email, password);
+			}
+		} catch (error) {
+			console.log(`Error: ${error}`);
+			error = true;
+      authenticating =false
 		}
 	}
 
 	function handleRegister() {
-    register = !register
-  }
+		register = !register;
+	}
 </script>
 
 <div class="authContainer">
@@ -38,7 +61,13 @@
 				<input type="password" placeholder="Confirm Password" bind:value={confirmPassword} />
 			</label>
 		{/if}
-		<button type="submit">Submit</button>
+		<button type="submit" on:click={handleAuth}>
+			{#if authenticating}
+				<img src={loading} alt="loading" height="20" width="20" />
+			{:else}
+				Submit
+			{/if}
+		</button>
 	</form>
 
 	<div class="options">
